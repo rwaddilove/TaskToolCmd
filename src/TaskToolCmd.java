@@ -2,8 +2,6 @@
 // By Roland Waddilove (github.com/rwaddilove/) as an exercise
 // while learning Java. Public Domain. Use at your own risk!
 
-// Get rid of numbers in Edit - use field names
-
 import java.io.*;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
