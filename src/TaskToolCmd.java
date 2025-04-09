@@ -2,20 +2,13 @@
 // By Roland Waddilove (github.com/rwaddilove/) as an exercise
 // while learning Java. Public Domain. Use at your own risk!
 
+// Get rid of numbers in Edit - use field names
+
 import java.io.*;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.*;
-
-class TaskObj {
-    String title;
-    String due;
-    String repeat;
-    String label;
-    String done;
-    String notes;
-}
 
 class Input {
     public static String InputStr(String prompt, int len) {
@@ -87,20 +80,20 @@ class Task {
 
     public static void Show(ArrayList<ArrayList<String>> tasks) {
         int i = 0;
-        System.out.println("\n   Title              Due        Repeat  Label      Done");
+        System.out.println("\n   Title                Due        Repeat  Label      Done");
         for (ArrayList<String> tsk : tasks ) {
             String title = tsk.getFirst();
-            if (title.length() > 16) title = title.substring(0,16) + "..";
-            System.out.printf("%2d %-18s %-10s %-7s %-10s %-3s\n", i++, title, tsk.get(1), tsk.get(2), tsk.get(3), tsk.get(4)); }
+            if (title.length() > 18) title = title.substring(0,16) + "..";
+            System.out.printf("%2d %-20s %-10s %-7s %-10s %-3s\n", i++, title, tsk.get(1), tsk.get(2), tsk.get(3), tsk.get(4)); }
         System.out.println();
     }
 
-    public static String Remove(ArrayList<ArrayList<String>> tasks) {
-        int tsk = Input.InputInt("REMOVE TASK: Which one? ");
+    public static String Remove(ArrayList<ArrayList<String>> tasks, int tsk) {
         if (tasks.isEmpty() || tsk < 0 || tsk >= tasks.size())
-            return "Task not found. Nothing removed.";
+            return "Task not found. Use: TaskToolCmd remove <number>";
         tasks.remove(tsk);
-        return "";
+        Task.Show(tasks);
+        return "Task removed.";
     }
 
     public static String New(ArrayList<ArrayList<String>> tasks) {
@@ -121,12 +114,12 @@ class Task {
         tasks.add(new ArrayList<>());
         for (String tsk : newtask)
             tasks.getLast().add(tsk);
+        Task.Show(tasks);
         return "Task added OK";
     }
 
-    public static String Edit(ArrayList<ArrayList<String>> tasks) {
-        int task = Input.InputInt("EDIT TASK: Which one? ");
-        if (tasks.isEmpty() || task < 0 || task >= tasks.size()) return "Task not found.";
+    public static String Edit(ArrayList<ArrayList<String>> tasks, int task) {
+        if (tasks.isEmpty() || task < 0 || task >= tasks.size()) return "Task not found. Use: TaskToolCmd edit <number>";
         String[] fields = {"Title", "Due", "Repeat", "Label", "Done", "Notes"};
         for (int i = 0; i < tasks.getFirst().size(); ++i)
             System.out.println(i + " " + fields[i] + ": " + tasks.get(task).get(i));
@@ -158,22 +151,22 @@ class Task {
         if (item == 5) {
             inp = Input.InputStr("Notes: ", 200);
             tasks.get(task).set(item, inp); }
+        Task.Show(tasks);
         return "Task updated";
     }
 
-    public static void View(ArrayList<ArrayList<String>> tasks) {
-        int task = Input.InputInt("VIEW TASK: Which one? ");
+    public static void View(ArrayList<ArrayList<String>> tasks, int task) {
         if (tasks.isEmpty() || task < 0 || task >= tasks.size()) {
-            System.out.println("Task not found.");
+            System.out.println("Task not found. Use: TaskToolCmd view <number>");
             return; }
+        System.out.println("VIEW TASK DETAILS");
         String[] fields = {"Title", "Due", "Repeat", "Label", "Done", "Notes"};
-        for (int i = 0; i < tasks.getFirst().size(); ++i)
+        for (int i = 0; i < tasks.get(task).size(); ++i)
             System.out.println(i + " " + fields[i] + ": " + tasks.get(task).get(i));
     }
 
-    public static String Done(ArrayList<ArrayList<String>> tasks) {
-        int task = Input.InputInt("SET TASK DONE: Which one? ");
-        if (tasks.isEmpty() || task < 0 || task >= tasks.size()) return "Bad task number.";
+    public static String Done(ArrayList<ArrayList<String>> tasks, int task) {
+        if (tasks.isEmpty() || task < 0 || task >= tasks.size()) return "Task not found. Use: TaskToolCmd done <number>";
         tasks.get(task).set(4, "yes");      // task is done
         if (tasks.get(task).get(2).isBlank()) return "Task status updated";     // no repeat
         // set next due date for repeated tasks
@@ -191,6 +184,7 @@ class Task {
         } while (currentDate.isAfter(duedate));
         tasks.get(task).set(1, duedate.toString());     // set next due date
         tasks.get(task).set(4, "no");                   // set not done
+        Task.Show(tasks);
         return "Task updated for repeat task.\nNew due date set, not done set.";
     }
 
@@ -214,44 +208,54 @@ class Task {
             System.out.println("You have tasks that are overdue!\n" + overdueTasks);
     }
 
-    public static void Sort(ArrayList<ArrayList<String>> tasks) {
-        if (tasks.size() < 3) return;
-        String inp = Input.InputStr("SORT TASKS:\nSort by: Title/Due/Label/Completed? ", 10).toLowerCase();
-        int index = 0;                          // title
-        if (inp.startsWith("d")) index = 1;     // due
-        if (inp.startsWith("l")) index = 3;     // label
-        if (inp.startsWith("c")) index = 4;     // done
+    public static String Sort(ArrayList<ArrayList<String>> tasks, String cmd) {
+        if (tasks.size() < 3) return "Not enough tasks to sort.";
+        int index = 9999;
+        if (cmd.equalsIgnoreCase("title")) index = 0;
+        if (cmd.equalsIgnoreCase("due")) index = 1;
+        if (cmd.equalsIgnoreCase("label")) index = 3;
+        if (cmd.equalsIgnoreCase("done")) index = 4;
+        if (index != 0 && index != 1 && index != 3 && index != 4) return "Can't sort on that!";
         for (int i = 0; i < tasks.size()-1; ++i)
             for (int j = tasks.size()-2; j >= i; --j)
                 if (tasks.get(j).get(index).compareToIgnoreCase(tasks.get(j+1).get(index)) > 0)
                     Collections.swap(tasks, j, j+1);
+        Task.Show(tasks);
+        return "Sorted.";
+    }
+
+    public static void Help() {
+        System.out.println("Commands: new/edit/done/remove/view/sort");
+        System.out.println("Edit/done/remove/view require a task number");
+        System.out.println("Eg. 'TaskToolCmd edit 3' to edit task 3");
+        System.out.println("Sort requires field name");
+        System.out.println("Eg. 'TaskToolCmd sort due' to sort by due date");
     }
 }
 
 
 public class TaskToolCmd {
     public static void main(String[] args) {
-        // title, due, repeat, label, done, notes
-        ArrayList<ArrayList<String>> tasks = new ArrayList<>();
+        ArrayList<ArrayList<String>> tasks = new ArrayList<>();     // title, due, repeat, label, done, notes
         File mac = new File("/users/shared");
         String filepath = mac.exists() ? "/users/shared/TaskTool.txt" : "/users/public/TaskTool.txt";
         FileOp.Read(filepath, tasks);
         System.out.println("----------------------------------------");
         System.out.println("           T A S K  T O O L");
         System.out.println("----------------------------------------");
-        String inp;
-        while (true) {
-            Task.Show(tasks);
-            Task.Overdue(tasks);
-            inp = Input.InputStr("New/Edit/Done/Remove/View/Sort/Quit: ", 10).toLowerCase();
-            if (inp.startsWith("q")) break;
-            if (inp.startsWith("n")) System.out.println(Task.New(tasks));
-            if (inp.startsWith("e")) System.out.println(Task.Edit(tasks));
-            if (inp.startsWith("d")) System.out.println(Task.Done(tasks));
-            if (inp.startsWith("r")) System.out.println(Task.Remove(tasks));
-            if (inp.startsWith("v")) Task.View(tasks);
-            if (inp.startsWith("s")) Task.Sort(tasks);
-        }
+        Task.Show(tasks);
+        Task.Overdue(tasks);
+        if (args.length ==0) Task.Show(tasks);
+        if (args.length == 1) {
+            if (args[0].equalsIgnoreCase("new")) System.out.println(Task.New(tasks));
+            if (args[0].equalsIgnoreCase("help") || args[0].equalsIgnoreCase("?")) Task.Help(); }
+        if (args.length == 2) {
+            int item = Input.isNumber(args[1]) ? Integer.parseInt(args[1]) : 9999;  // an invalid number
+            if (args[0].equalsIgnoreCase("edit")) System.out.println(Task.Edit(tasks, item));
+            if (args[0].equalsIgnoreCase("done")) System.out.println(Task.Done(tasks, item));
+            if (args[0].equalsIgnoreCase("remove")) System.out.println(Task.Remove(tasks, item));
+            if (args[0].equalsIgnoreCase("view")) Task.View(tasks, item);
+            if (args[0].equalsIgnoreCase("sort")) System.out.println(Task.Sort(tasks, args[1])); }
         FileOp.Write(filepath, tasks);
     }
 }
