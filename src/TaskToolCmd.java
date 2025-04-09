@@ -119,40 +119,33 @@ class Task {
     }
 
     public static String Edit(ArrayList<ArrayList<String>> tasks, int task) {
+        System.out.println("EDIT TASK:");
         if (tasks.isEmpty() || task < 0 || task >= tasks.size()) return "Task not found. Use: TaskToolCmd edit <number>";
         String[] fields = {"Title", "Due", "Repeat", "Label", "Done", "Notes"};
         for (int i = 0; i < tasks.getFirst().size(); ++i)
-            System.out.println(i + " " + fields[i] + ": " + tasks.get(task).get(i));
-        int item = Input.InputInt("Edit which item? ");
-        if (item < 0 || item >= tasks.getFirst().size())  return "Item not found.";
-
-        // 0 title, 1 due, 2 repeat, 3 label, 4 done, 5 notes
-        String inp;
-        if (item == 0) {
+            System.out.println(fields[i] + ": " + tasks.get(task).get(i));
+        String inp = Input.InputStr("\nEdit which item? ", 8).toLowerCase();
+        if (inp.equals("title")) {
             inp = Input.InputStr("Title: ", 30);
             if (inp.isBlank()) return "Not changed. Task must have a title.";
-            tasks.get(task).set(item, inp); }
-        if (item == 1) {
-            inp = Input.InputDate("Due date (yyyy-mm-dd): ");
-            tasks.get(task).set(item, inp); }
-        if (item == 2) {
-            inp = Input.InputStr("Repeat (D)aily, (W)eekly, (M)onthly: ", 10).toLowerCase();
-            if (inp.startsWith("d")) tasks.get(task).set(item, "daily");
-            else if (inp.startsWith("w")) tasks.get(task).set(item, "weekly");
-            else if (inp.startsWith("m")) tasks.get(task).set(item, "monthly");
-            else tasks.get(task).set(item, ""); }
-        if (item == 3) {
-            inp = Input.InputStr("Label: ", 12);
-            tasks.get(task).set(item, inp); }
-        if (item == 4) {
+            tasks.get(task).set(0, inp); }
+        if (inp.equals("due"))
+            tasks.get(task).set(1, Input.InputDate("Due date (yyyy-mm-dd): "));
+        if (inp.equals("repeat")) {
+            inp = Input.InputStr("Repeat: daily, weekly, monthly: ", 9).toLowerCase();
+            if (inp.startsWith("d")) tasks.get(task).set(2, "daily");
+            if (inp.startsWith("w")) tasks.get(task).set(2, "weekly");
+            if (inp.startsWith("m")) tasks.get(task).set(2, "monthly"); }
+        if (inp.equals("label"))
+            tasks.get(task).set(3, Input.InputStr("Label: ", 12));
+        if (inp.equals("done")) {
             inp = Input.InputStr("Is task done (y/n)? ", 3).toLowerCase();
             inp = (inp.startsWith("y")) ? "yes" : "no";
-            tasks.get(task).set(item, inp); }
-        if (item == 5) {
-            inp = Input.InputStr("Notes: ", 200);
-            tasks.get(task).set(item, inp); }
+            tasks.get(task).set(4, inp); }
+        if (inp.equals("notes"))
+            tasks.get(task).set(5, Input.InputStr("Notes: ", 200));
         Task.Show(tasks);
-        return "Task updated";
+        return " ";
     }
 
     public static void View(ArrayList<ArrayList<String>> tasks, int task) {
@@ -160,9 +153,10 @@ class Task {
             System.out.println("Task not found. Use: TaskToolCmd view <number>");
             return; }
         System.out.println("VIEW TASK DETAILS");
-        String[] fields = {"Title", "Due", "Repeat", "Label", "Done", "Notes"};
+        String[] fields = {"Title: ", "Due: ", "Repeat: ", "Label: ", "Done: ", "Notes: "};
         for (int i = 0; i < tasks.get(task).size(); ++i)
-            System.out.println(i + " " + fields[i] + ": " + tasks.get(task).get(i));
+            System.out.println(fields[i] + tasks.get(task).get(i));
+        System.out.println();
     }
 
     public static String Done(ArrayList<ArrayList<String>> tasks, int task) {
@@ -225,7 +219,7 @@ class Task {
     }
 
     public static void Help() {
-        System.out.println("Commands: new/edit/done/remove/view/sort");
+        System.out.println("COMMANDS: new/edit/done/remove/view/sort");
         System.out.println("Edit/done/remove/view require a task number");
         System.out.println("Eg. 'TaskToolCmd edit 3' to edit task 3");
         System.out.println("Sort requires field name");
