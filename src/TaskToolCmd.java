@@ -2,8 +2,6 @@
 // By Roland Waddilove (github.com/rwaddilove/) as an exercise
 // while learning Java. Public Domain. Use at your own risk!
 
-// when to re-display tasks, eg. only after a change like done/remove
-
 import java.io.*;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
@@ -80,11 +78,11 @@ class Task {
 
     public static void Show(ArrayList<ArrayList<String>> tasks) {
         int i = 0;
-        System.out.println("\n   Title              Due        Repeat  Label      Done");
+        System.out.println("\n   Title                Due        Repeat  Label      Done");
         for (ArrayList<String> tsk : tasks ) {
             String title = tsk.getFirst();
-            if (title.length() > 16) title = title.substring(0,16) + "..";
-            System.out.printf("%2d %-18s %-10s %-7s %-10s %-3s\n", i++, title, tsk.get(1), tsk.get(2), tsk.get(3), tsk.get(4)); }
+            if (title.length() > 18) title = title.substring(0,16) + "..";
+            System.out.printf("%2d %-20s %-10s %-7s %-10s %-3s\n", i++, title, tsk.get(1), tsk.get(2), tsk.get(3), tsk.get(4)); }
         System.out.println();
     }
 
@@ -92,6 +90,7 @@ class Task {
         if (tasks.isEmpty() || tsk < 0 || tsk >= tasks.size())
             return "Task not found. Use: TaskToolCmd remove <number>";
         tasks.remove(tsk);
+        Task.Show(tasks);
         return "Task removed.";
     }
 
@@ -113,53 +112,49 @@ class Task {
         tasks.add(new ArrayList<>());
         for (String tsk : newtask)
             tasks.getLast().add(tsk);
+        Task.Show(tasks);
         return "Task added OK";
     }
 
     public static String Edit(ArrayList<ArrayList<String>> tasks, int task) {
+        System.out.println("EDIT TASK:");
         if (tasks.isEmpty() || task < 0 || task >= tasks.size()) return "Task not found. Use: TaskToolCmd edit <number>";
         String[] fields = {"Title", "Due", "Repeat", "Label", "Done", "Notes"};
         for (int i = 0; i < tasks.getFirst().size(); ++i)
-            System.out.println(i + " " + fields[i] + ": " + tasks.get(task).get(i));
-        int item = Input.InputInt("Edit which item? ");
-        if (item < 0 || item >= tasks.getFirst().size())  return "Item not found.";
-
-        // 0 title, 1 due, 2 repeat, 3 label, 4 done, 5 notes
-        String inp;
-        if (item == 0) {
+            System.out.println(fields[i] + ": " + tasks.get(task).get(i));
+        String inp = Input.InputStr("\nEdit which item? ", 8).toLowerCase();
+        if (inp.equals("title")) {
             inp = Input.InputStr("Title: ", 30);
             if (inp.isBlank()) return "Not changed. Task must have a title.";
-            tasks.get(task).set(item, inp); }
-        if (item == 1) {
-            inp = Input.InputDate("Due date (yyyy-mm-dd): ");
-            tasks.get(task).set(item, inp); }
-        if (item == 2) {
-            inp = Input.InputStr("Repeat (D)aily, (W)eekly, (M)onthly: ", 10).toLowerCase();
-            if (inp.startsWith("d")) tasks.get(task).set(item, "daily");
-            else if (inp.startsWith("w")) tasks.get(task).set(item, "weekly");
-            else if (inp.startsWith("m")) tasks.get(task).set(item, "monthly");
-            else tasks.get(task).set(item, ""); }
-        if (item == 3) {
-            inp = Input.InputStr("Label: ", 12);
-            tasks.get(task).set(item, inp); }
-        if (item == 4) {
+            tasks.get(task).set(0, inp); }
+        if (inp.equals("due"))
+            tasks.get(task).set(1, Input.InputDate("Due date (yyyy-mm-dd): "));
+        if (inp.equals("repeat")) {
+            inp = Input.InputStr("Repeat: daily, weekly, monthly: ", 9).toLowerCase();
+            if (inp.startsWith("d")) tasks.get(task).set(2, "daily");
+            if (inp.startsWith("w")) tasks.get(task).set(2, "weekly");
+            if (inp.startsWith("m")) tasks.get(task).set(2, "monthly"); }
+        if (inp.equals("label"))
+            tasks.get(task).set(3, Input.InputStr("Label: ", 12));
+        if (inp.equals("done")) {
             inp = Input.InputStr("Is task done (y/n)? ", 3).toLowerCase();
             inp = (inp.startsWith("y")) ? "yes" : "no";
-            tasks.get(task).set(item, inp); }
-        if (item == 5) {
-            inp = Input.InputStr("Notes: ", 200);
-            tasks.get(task).set(item, inp); }
-        return "Task updated";
+            tasks.get(task).set(4, inp); }
+        if (inp.equals("notes"))
+            tasks.get(task).set(5, Input.InputStr("Notes: ", 200));
+        Task.Show(tasks);
+        return " ";
     }
 
     public static void View(ArrayList<ArrayList<String>> tasks, int task) {
         if (tasks.isEmpty() || task < 0 || task >= tasks.size()) {
             System.out.println("Task not found. Use: TaskToolCmd view <number>");
             return; }
-        String[] fields = {"Title", "Due", "Repeat", "Label", "Done", "Notes"};
-        for (int i = 0; i < 6; ++i)
-//            for (int i = 0; i < tasks.getFirst().size(); ++i)
-            System.out.println(i + " " + fields[i] + ": " + tasks.get(task).get(i));
+        System.out.println("VIEW TASK DETAILS");
+        String[] fields = {"Title: ", "Due: ", "Repeat: ", "Label: ", "Done: ", "Notes: "};
+        for (int i = 0; i < tasks.get(task).size(); ++i)
+            System.out.println(fields[i] + tasks.get(task).get(i));
+        System.out.println();
     }
 
     public static String Done(ArrayList<ArrayList<String>> tasks, int task) {
@@ -181,6 +176,7 @@ class Task {
         } while (currentDate.isAfter(duedate));
         tasks.get(task).set(1, duedate.toString());     // set next due date
         tasks.get(task).set(4, "no");                   // set not done
+        Task.Show(tasks);
         return "Task updated for repeat task.\nNew due date set, not done set.";
     }
 
@@ -204,22 +200,35 @@ class Task {
             System.out.println("You have tasks that are overdue!\n" + overdueTasks);
     }
 
-    public static String Sort(ArrayList<ArrayList<String>> tasks, int index) {
+    public static String Sort(ArrayList<ArrayList<String>> tasks, String cmd) {
         if (tasks.size() < 3) return "Not enough tasks to sort.";
-        if (index != 0 && index != 1 && index != 3 && index != 4) return "Only sort on 0/1/3/4";
+        int index = 9999;
+        if (cmd.equalsIgnoreCase("title")) index = 0;
+        if (cmd.equalsIgnoreCase("due")) index = 1;
+        if (cmd.equalsIgnoreCase("label")) index = 3;
+        if (cmd.equalsIgnoreCase("done")) index = 4;
+        if (index != 0 && index != 1 && index != 3 && index != 4) return "Can't sort on that!";
         for (int i = 0; i < tasks.size()-1; ++i)
             for (int j = tasks.size()-2; j >= i; --j)
                 if (tasks.get(j).get(index).compareToIgnoreCase(tasks.get(j+1).get(index)) > 0)
                     Collections.swap(tasks, j, j+1);
+        Task.Show(tasks);
         return "Sorted.";
+    }
+
+    public static void Help() {
+        System.out.println("COMMANDS: new/edit/done/remove/view/sort");
+        System.out.println("Edit/done/remove/view require a task number");
+        System.out.println("Eg. 'TaskToolCmd edit 3' to edit task 3");
+        System.out.println("Sort requires field name");
+        System.out.println("Eg. 'TaskToolCmd sort due' to sort by due date");
     }
 }
 
 
 public class TaskToolCmd {
     public static void main(String[] args) {
-        // title, due, repeat, label, done, notes
-        ArrayList<ArrayList<String>> tasks = new ArrayList<>();
+        ArrayList<ArrayList<String>> tasks = new ArrayList<>();     // title, due, repeat, label, done, notes
         File mac = new File("/users/shared");
         String filepath = mac.exists() ? "/users/shared/TaskTool.txt" : "/users/public/TaskTool.txt";
         FileOp.Read(filepath, tasks);
@@ -228,17 +237,17 @@ public class TaskToolCmd {
         System.out.println("----------------------------------------");
         Task.Show(tasks);
         Task.Overdue(tasks);
-        if (args.length > 0) {
-            int item = 9999;        // an invalid task number
-            if (Input.isNumber(args[1])) item = Integer.parseInt(args[1]);
-            if (args[0].toLowerCase().startsWith("new")) System.out.println(Task.New(tasks));
-            if (args[0].toLowerCase().startsWith("edit")) System.out.println(Task.Edit(tasks, item));
-            if (args[0].toLowerCase().startsWith("done")) System.out.println(Task.Done(tasks, item));
-            if (args[0].toLowerCase().startsWith("remove")) System.out.println(Task.Remove(tasks, item));
-            if (args[0].toLowerCase().startsWith("view")) Task.View(tasks, item);
-            if (args[0].toLowerCase().startsWith("sort")) System.out.println(Task.Sort(tasks, item));
-            Task.Show(tasks);
-        }
+        if (args.length ==0) Task.Show(tasks);
+        if (args.length == 1) {
+            if (args[0].equalsIgnoreCase("new")) System.out.println(Task.New(tasks));
+            if (args[0].equalsIgnoreCase("help") || args[0].equalsIgnoreCase("?")) Task.Help(); }
+        if (args.length == 2) {
+            int item = Input.isNumber(args[1]) ? Integer.parseInt(args[1]) : 9999;  // an invalid number
+            if (args[0].equalsIgnoreCase("edit")) System.out.println(Task.Edit(tasks, item));
+            if (args[0].equalsIgnoreCase("done")) System.out.println(Task.Done(tasks, item));
+            if (args[0].equalsIgnoreCase("remove")) System.out.println(Task.Remove(tasks, item));
+            if (args[0].equalsIgnoreCase("view")) Task.View(tasks, item);
+            if (args[0].equalsIgnoreCase("sort")) System.out.println(Task.Sort(tasks, args[1])); }
         FileOp.Write(filepath, tasks);
     }
 }
