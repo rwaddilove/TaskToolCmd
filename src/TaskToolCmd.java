@@ -56,6 +56,7 @@ class FileOp {
                 tasks.add(new ArrayList<>());
                 for (String value : values)
                     tasks.getLast().add(value);
+                if (tasks.getLast().size() < 6) tasks.getLast().add("");  // "" not added
             }
         }
         catch (FileNotFoundException e) { System.out.println("'" + fp + "' not found."); }
@@ -225,11 +226,14 @@ class Task {
     }
 
     public static void Help() {
-        System.out.println("COMMANDS: new/edit/done/remove/view/sort");
-        System.out.println("Edit/done/remove/view require a task number");
-        System.out.println("Eg. 'TaskToolCmd edit 3' to edit task 3");
-        System.out.println("Sort requires field name");
-        System.out.println("Eg. 'TaskToolCmd sort due' to sort by due date");
+        System.out.println("COMMANDS:");
+        System.out.println("TaskToolCmd");
+        System.out.println("TaskToolCmd new");
+        System.out.println("TaskToolCmd edit <taskNum>");
+        System.out.println("TaskToolCmd done <taskNum>");
+        System.out.println("TaskToolCmd view <taskNum>");
+        System.out.println("TaskToolCmd remove <taskNum>");
+        System.out.println("TaskToolCmd sort <title|due|label|done>");
     }
 }
 
